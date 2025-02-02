@@ -18,3 +18,4 @@ router.route("/create-shipping-detail").post(isAuthenticated_1.isAuthenticated, 
 router.route("/shipping-detail").get(isAuthenticated_1.isAuthenticated, userController_1.getUserShippingDetail);
 router.route("/update-shipping-detail/").put(isAuthenticated_1.isAuthenticated, userController_1.updateShippingDetail);
 exports.default = router;
+//# sourceMappingURL=userRoute.js.map

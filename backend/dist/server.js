@@ -13,7 +13,6 @@ const productRoute_1 = __importDefault(require("./routes/productRoute"));
 const cartRoute_1 = __importDefault(require("./routes/cartRoute"));
 const orderRoute_1 = __importDefault(require("./routes/orderRoute"));
 const mongodb_1 = require("./config/mongodb");
-const path_1 = __importDefault(require("path"));
 const app = (0, express_1.default)();
 dotenv_1.default.config();
 app.use(express_1.default.json());
@@ -32,13 +31,9 @@ app.use((0, cors_1.default)({
     origin: allowedOrigins, // Specify your frontend URL
     credentials: true, // Enable credentials (cookies, authorization headers)
 }));
-const DIRNAME = path_1.default.resolve();
 app.use("/api/v1", userRoute_1.default);
 app.use("/api/v1", productRoute_1.default);
 app.use("/api/v1", cartRoute_1.default);
 app.use("/api/v1", orderRoute_1.default);
-app.use(express_1.default.static(path_1.default.join(DIRNAME, "/frontend/dist")));
-app.use("*", (_, res) => {
-    res.sendFile(path_1.default.resolve(DIRNAME, "frontend", "dist", "index.html"));
-});
 exports.default = app;
+//# sourceMappingURL=server.js.map

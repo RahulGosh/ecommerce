@@ -13,3 +13,4 @@ router.route("/products").get(productController_1.getAllProducts);
 router.route("/remove-product").delete(adminAuth_1.adminAuth, productController_1.removeProduct);
 router.route("/product/:productId").get(productController_1.singleProduct);
 exports.default = router;
+//# sourceMappingURL=productRoute.js.map

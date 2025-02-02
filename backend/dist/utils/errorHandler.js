@@ -1,8 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class ErrorHandler extends Error {
-    message;
-    statusCode;
     constructor(message, statusCode) {
         super(message);
         this.message = message;
@@ -11,3 +9,4 @@ class ErrorHandler extends Error {
     }
 }
 exports.default = ErrorHandler;
+//# sourceMappingURL=errorHandler.js.map

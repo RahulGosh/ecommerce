@@ -50,3 +50,4 @@ const productSchema = new mongoose_1.default.Schema({
 });
 // Export the Product model
 exports.Product = mongoose_1.default.model("Product", productSchema);
+//# sourceMappingURL=productModel.js.map

@@ -24,7 +24,7 @@ const Collection: React.FC = () => {
   const [sortType, setSortType] = useState("relevent");
 
   // Fetch products from API
-  const { data: products, isLoading, isError } = useGetAllProductsQuery();
+  const { data: products, isLoading } = useGetAllProductsQuery();
 
   // Handle category toggle
   const toggleCategory = (e: React.ChangeEvent<HTMLInputElement>) => {

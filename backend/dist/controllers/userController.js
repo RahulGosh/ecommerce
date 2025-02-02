@@ -348,3 +348,4 @@ const updateShippingDetail = async (req, res) => {
     }
 };
 exports.updateShippingDetail = updateShippingDetail;
+//# sourceMappingURL=userController.js.map

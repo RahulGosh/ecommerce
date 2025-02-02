@@ -43,3 +43,4 @@ const deleteVideoFromCloudinary = async (publicId) => {
     }
 };
 exports.deleteVideoFromCloudinary = deleteVideoFromCloudinary;
+//# sourceMappingURL=cloudinary.js.map

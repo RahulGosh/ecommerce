@@ -12,3 +12,4 @@ router.route("/add-to-cart/:productId").post(isAuthenticated_1.isAuthenticated, 
 router.route("/update-cart/:productId").put(isAuthenticated_1.isAuthenticated, cartController_1.updateCart);
 router.route("/remove-item/:productId").delete(isAuthenticated_1.isAuthenticated, cartController_1.removeItemFromCart);
 exports.default = router;
+//# sourceMappingURL=cartRoute.js.map

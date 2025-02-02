@@ -104,3 +104,4 @@ const cartSchema = new mongoose_1.Schema({
     createdAt: { type: Date, default: Date.now },
 });
 exports.Cart = mongoose_1.default.model("Cart", cartSchema);
+//# sourceMappingURL=cartModel.js.map

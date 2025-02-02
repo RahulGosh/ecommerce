@@ -136,12 +136,13 @@ const orderSchema = new mongoose_1.Schema({
         type: String,
         required: true,
     },
-    payment: {
-        type: Boolean,
+    paymentStatus: {
+        type: String,
+        enum: ["Unpaid", "Paid"],
         required: true,
-        default: false,
+        default: "Unpaid",
     },
-    status: {
+    shippingStatus: {
         type: String,
         required: true,
         default: 'Order Placed',
@@ -157,3 +158,4 @@ const orderSchema = new mongoose_1.Schema({
 });
 // Export Order model
 exports.Order = mongoose_1.default.model('Order', orderSchema);
+//# sourceMappingURL=orderModel.js.map

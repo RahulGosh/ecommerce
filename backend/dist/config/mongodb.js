@@ -19,3 +19,4 @@ const connectDB = async () => {
         .catch(console.error);
 };
 exports.connectDB = connectDB;
+//# sourceMappingURL=mongodb.js.map

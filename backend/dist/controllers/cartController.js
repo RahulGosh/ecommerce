@@ -88,6 +88,8 @@ const addToCart = async (req, res) => {
             subtotal,
             tax,
             shippingCharges: cart.shippingCharges,
+            success: true,
+            message: "Item Added to cart"
         });
     }
     catch (error) {
@@ -179,7 +181,7 @@ const removeItemFromCart = async (req, res) => {
         cart.quantity = cart.items.reduce((acc, item) => acc + item.quantity, 0);
         cart.totalPrice = cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
         await cart.save();
-        res.json({ cart });
+        res.json({ cart, success: true, message: "Item Removed" });
     }
     catch (error) {
         console.error(error);
@@ -187,3 +189,4 @@ const removeItemFromCart = async (req, res) => {
     }
 };
 exports.removeItemFromCart = removeItemFromCart;
+//# sourceMappingURL=cartController.js.map

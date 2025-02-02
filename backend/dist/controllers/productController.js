@@ -134,3 +134,4 @@ const singleProduct = async (req, res) => {
     }
 };
 exports.singleProduct = singleProduct;
+//# sourceMappingURL=productController.js.map

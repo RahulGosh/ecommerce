@@ -13,10 +13,13 @@ const generateAdminToken = (res, user, userId, message, statusCode = 200) => {
     // Set cookie and send response
     res.status(statusCode)
         .cookie("adminToken", adminToken, {
-        secure: process.env.NODE_ENV === "production",
         httpOnly: true,
-        sameSite: "strict",
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        // secure: isProduction,
+        secure: true, // Only use secure in production
+        // sameSite: isProduction ? 'none' : 'lax',
+        sameSite: "none",
+        maxAge: 15 * 60 * 1000,
+        path: '/'
     })
         .json({
         success: true,
@@ -26,3 +29,4 @@ const generateAdminToken = (res, user, userId, message, statusCode = 200) => {
     });
 };
 exports.generateAdminToken = generateAdminToken;
+//# sourceMappingURL=generateAdminToken.js.map

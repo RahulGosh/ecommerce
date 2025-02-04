@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { assets } from "../assets/assets";
 import { useLogoutMutation } from "../store/api/adminApi";
 import { toast } from "react-toastify";

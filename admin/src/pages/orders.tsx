@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useGetAllOrdersQuery,
   useUpdateStatusMutation,
@@ -30,7 +30,7 @@ const Orders = () => {
     },
   ] = useUpdateStatusForCODMutation();
 
-  const [orderUpdated, setOrderUpdated] = useState<boolean>(false);
+  const [_orderUpdated, setOrderUpdated] = useState<boolean>(false);
 
   useEffect(() => {
     if (statusUpdated) {

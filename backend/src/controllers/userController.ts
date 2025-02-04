@@ -140,8 +140,12 @@ export const adminLogin = async (
     // Set the adminToken in a cookie
     res.cookie("adminToken", adminToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+            // secure: isProduction,
+            secure: true, // Only use secure in production
+            // sameSite: isProduction ? 'none' : 'lax',
+            sameSite: "none",
+            maxAge: 15 * 60 * 1000,
+            path: '/'
     });
 
     res.status(200).json({

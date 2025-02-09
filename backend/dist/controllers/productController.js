@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.singleProduct = exports.removeProduct = exports.getAllProducts = exports.addProduct = void 0;
+exports.singleProduct = exports.removeProduct = exports.latestProductsCollection = exports.getAllProducts = exports.addProduct = void 0;
 const cloudinary_1 = require("../config/cloudinary");
 const productModel_1 = require("../models/productModel");
 const addProduct = async (req, res, next) => {
@@ -30,6 +30,8 @@ const addProduct = async (req, res, next) => {
         }
         // Convert sizes to an array, ensuring it's a string before using split()
         const sizesArray = Array.isArray(sizes) ? sizes : (typeof sizes === "string" ? sizes.split(",") : []);
+        // Ensure bestSeller is a boolean value
+        const isBestSeller = bestSeller === "true" || bestSeller === true;
         // Create the product
         const product = await productModel_1.Product.create({
             name,
@@ -39,7 +41,7 @@ const addProduct = async (req, res, next) => {
             category,
             subCategory,
             sizes: sizesArray, // Store the sizes as an array
-            bestSeller: bestSeller === "true" ? true : false, // Convert bestSeller to boolean
+            bestSeller: isBestSeller, // Set the bestSeller flag
             date: Date.now(),
         });
         res.status(201).json({ success: true, product, message: "Product Added Successfully!" });
@@ -71,6 +73,19 @@ const getAllProducts = async (req, res) => {
     }
 };
 exports.getAllProducts = getAllProducts;
+const latestProductsCollection = async (req, res) => {
+    try {
+        const latestProducts = await productModel_1.Product.find()
+            .sort({ date: -1 })
+            .limit(8);
+        res.status(200).json({ success: true, products: latestProducts });
+    }
+    catch (error) {
+        console.error("Error fetching latest products:", error);
+        res.status(500).json({ success: false, message: "Server Error" });
+    }
+};
+exports.latestProductsCollection = latestProductsCollection;
 const removeProduct = async (req, res, next) => {
     try {
         const { productId } = req.body;

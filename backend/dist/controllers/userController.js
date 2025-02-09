@@ -3,12 +3,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateShippingDetail = exports.getUserShippingDetail = exports.createShippingDetail = exports.logout = exports.getAdminDetails = exports.getProfile = exports.adminLogin = exports.login = exports.registerUser = void 0;
+exports.resetPassword = exports.forgotPassword = exports.updateShippingDetail = exports.getUserShippingDetail = exports.createShippingDetail = exports.logout = exports.getAdminDetails = exports.getProfile = exports.adminLogin = exports.login = exports.registerUser = void 0;
 const userModel_1 = require("../models/userModel");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const errorHandler_1 = __importDefault(require("../utils/errorHandler"));
 const generateUserToken_1 = require("../utils/generateUserToken");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const crypto_1 = __importDefault(require("crypto"));
+const sendEmail_1 = __importDefault(require("../utils/sendEmail"));
 const registerUser = async (req, res, next) => {
     try {
         const { name, email, password } = req.body;
@@ -111,8 +113,12 @@ const adminLogin = async (req, res, next) => {
         // Set the adminToken in a cookie
         res.cookie("adminToken", adminToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            maxAge: 24 * 60 * 60 * 1000, // 1 day
+            // secure: isProduction,
+            secure: true, // Only use secure in production
+            // sameSite: isProduction ? 'none' : 'lax',
+            sameSite: "none",
+            maxAge: 15 * 60 * 1000,
+            path: '/'
         });
         res.status(200).json({
             success: true,
@@ -348,4 +354,75 @@ const updateShippingDetail = async (req, res) => {
     }
 };
 exports.updateShippingDetail = updateShippingDetail;
+const forgotPassword = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        const user = await userModel_1.User.findOne({ email });
+        if (!user) {
+            res.status(404).json({ success: false, message: "User not found" });
+            return;
+        }
+        // Generate reset token
+        const resetToken = user.getResetPasswordToken();
+        await user.save({ validateBeforeSave: false });
+        // Reset password URL
+        const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+        // Email message
+        const message = `
+      <h2>Password Reset Request</h2>
+      <p>Please click the link below to reset your password:</p>
+      <a href="${resetUrl}" clicktracking=off>${resetUrl}</a>
+      <p>This link will expire in 15 minutes.</p>
+    `;
+        try {
+            await (0, sendEmail_1.default)({
+                email: user.email,
+                subject: "Password Reset Request",
+                message,
+            });
+            res.status(200).json({ success: true, message: "Password reset email sent" });
+        }
+        catch (error) {
+            console.error("Email sending error:", error); // Log error to console
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpire = undefined;
+            await user.save();
+            res.status(500).json({ success: false, message: "Email could not be sent" });
+            return;
+        }
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+exports.forgotPassword = forgotPassword;
+const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params; // Token from URL
+        const { password } = req.body; // New password
+        // Hash the token to match the stored one
+        const resetPasswordToken = crypto_1.default.createHash("sha256").update(token).digest("hex");
+        // Find user by reset token and check expiration
+        const user = await userModel_1.User.findOne({
+            resetPasswordToken,
+            resetPasswordExpire: { $gt: Date.now() }, // Token should not be expired
+        });
+        if (!user) {
+            res.status(400).json({ success: false, message: "Invalid or expired token" });
+            return;
+        }
+        // Hash new password
+        const salt = await bcryptjs_1.default.genSalt(10);
+        user.password = await bcryptjs_1.default.hash(password, salt);
+        // Clear reset token fields
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+        await user.save();
+        res.status(200).json({ success: true, message: "Password reset successful" });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: "Server error", error });
+    }
+};
+exports.resetPassword = resetPassword;
 //# sourceMappingURL=userController.js.map

@@ -11,6 +11,15 @@ const userModel_1 = require("../models/userModel");
 const productModel_1 = require("../models/productModel");
 const cartModel_1 = require("../models/cartModel");
 const mongoose_1 = __importDefault(require("mongoose"));
+const calculateShippingPrice = (quantity, itemsPrice) => {
+    if (itemsPrice >= 5000)
+        return 0; // Free shipping for orders above $500
+    if (quantity <= 2)
+        return 150; // $5 for small orders
+    if (quantity <= 5)
+        return 250; // $10 for medium orders
+    return 15; // $15 for large orders
+};
 const addToCart = async (req, res) => {
     console.log("Step 1: Entered addToCart function");
     const { productId } = req.params;
@@ -57,39 +66,44 @@ const addToCart = async (req, res) => {
             return;
         }
         console.log("Step 14: Updating cart items");
-        const existingItem = cart.items.find((item) => item.product.toString() === productId.toString() && item.size === size);
         const productObjectId = new mongoose_1.default.Types.ObjectId(productId); // Convert to ObjectId
+        const existingItem = cart.items.find((item) => item.product.toString() === productId.toString() && item.size === size);
         if (existingItem) {
-            existingItem.quantity++;
+            existingItem.quantity++; // Increment quantity if item already exists
         }
         else {
             cart.items.push({
                 product: productObjectId,
                 name: product.name,
                 size,
-                quantity: 1,
+                quantity: 1, // Set initial quantity to 1
                 price: product.price,
                 imageUrl: product.images[0]?.imageUrl,
                 createdAt: new Date(),
             });
         }
-        cart.quantity = cart.items.reduce((acc, item) => acc + item.quantity, 0);
-        const subtotal = cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
-        const tax = Math.round(subtotal * 0.3 * 100) / 100;
-        const userCountry = user.shippingDetail?.country;
-        cart.shippingCharges = userCountry === "India" ? 20 : 100;
-        cart.totalPrice = subtotal + tax + cart.shippingCharges;
+        // Recalculate total cart quantity & price
+        cart.quantity = cart.items.reduce((total, item) => total + item.quantity, 0);
+        const itemsPrice = cart.items.reduce((total, item) => total + item.price * item.quantity, 0);
+        const taxPrice = Math.round(itemsPrice * 0.3 * 100) / 100;
+        const shippingPrice = calculateShippingPrice(cart.quantity, itemsPrice);
+        const totalPrice = itemsPrice + taxPrice + shippingPrice;
+        cart.shippingPrice = shippingPrice;
+        cart.totalPrice = totalPrice;
+        console.log("Cart Quantity:", cart.quantity);
+        console.log("Items Price:", itemsPrice);
+        console.log("Calculated Shipping Price:", calculateShippingPrice(cart.quantity, itemsPrice));
         console.log("Step 15: Saving cart");
         await cart.save();
         console.log("Step 16: Sending response");
         res.json({
             cart,
-            totalPrice: cart.totalPrice,
-            subtotal,
-            tax,
-            shippingCharges: cart.shippingCharges,
+            totalPrice,
+            itemsPrice,
+            taxPrice,
+            shippingPrice,
             success: true,
-            message: "Item Added to cart"
+            message: "Item added to cart",
         });
     }
     catch (error) {
@@ -106,13 +120,33 @@ const getUserCart = async (req, res) => {
             res.status(404).json({ message: "Cart not found" });
             return;
         }
-        const subtotal = cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
-        const tax = Math.round(subtotal * 0.3 * 100) / 100;
-        const user = await userModel_1.User.findById(userId);
-        const userCountry = user?.shippingDetail?.country;
-        const shippingCharges = userCountry === "India" ? 20 : 100;
-        const totalPrice = subtotal + tax + shippingCharges;
-        res.json({ cart, totalPrice, subtotal, tax, shippingCharges });
+        cart.quantity = cart.items.reduce((total, item) => total + item.quantity, 0);
+        const itemsPrice = cart.items.reduce((total, item) => total + item.price * item.quantity, 0);
+        const taxPrice = Math.round(itemsPrice * 0.3 * 100) / 100;
+        const shippingPrice = calculateShippingPrice(cart.quantity, itemsPrice);
+        const totalPrice = itemsPrice + taxPrice + shippingPrice;
+        cart.shippingPrice = shippingPrice;
+        cart.totalPrice = totalPrice;
+        console.log("Cart Quantity:", cart.quantity);
+        console.log("Items Price:", itemsPrice);
+        console.log("Calculated Shipping Price:", calculateShippingPrice(cart.quantity, itemsPrice));
+        cart.itemsPrice = itemsPrice;
+        cart.taxPrice = taxPrice;
+        // If the cart is empty, reset everything
+        if (cart.quantity === 0) {
+            cart.shippingPrice = 0;
+            cart.totalPrice = 0;
+            cart.itemsPrice = 0;
+            cart.taxPrice = 0;
+        }
+        res.json({
+            cart,
+            totalPrice,
+            itemsPrice,
+            taxPrice,
+            shippingPrice,
+            success: true,
+        });
     }
     catch (error) {
         console.error(error);
@@ -146,16 +180,26 @@ const updateCart = async (req, res) => {
                 cart.items[itemIndex].quantity = quantity;
             }
             // Recalculate cart totals
-            cart.quantity = cart.items.reduce((acc, item) => acc + item.quantity, 0);
-            const subtotal = cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
-            const tax = Math.round(subtotal * 0.3 * 100) / 100;
-            const user = await userModel_1.User.findById(userId);
-            const userCountry = user?.shippingDetail?.country;
-            cart.shippingCharges = userCountry === "India" ? 20 : 100;
-            cart.totalPrice = subtotal + tax + cart.shippingCharges;
+            cart.quantity = cart.items.reduce((total, item) => total + item.quantity, 0);
+            const itemsPrice = cart.items.reduce((total, item) => total + item.price * item.quantity, 0);
+            const taxPrice = Math.round(itemsPrice * 0.3 * 100) / 100;
+            const shippingPrice = calculateShippingPrice(cart.quantity, itemsPrice);
+            const totalPrice = itemsPrice + taxPrice + shippingPrice;
+            cart.shippingPrice = shippingPrice;
+            cart.totalPrice = totalPrice;
+            console.log("Cart Quantity:", cart.quantity);
+            console.log("Items Price:", itemsPrice);
+            console.log("Calculated Shipping Price:", calculateShippingPrice(cart.quantity, itemsPrice));
             // Save updated cart
             await cart.save();
-            res.json({ cart, subtotal, tax, shippingCharges: cart.shippingCharges, totalPrice: cart.totalPrice });
+            res.json({
+                cart,
+                totalPrice,
+                itemsPrice,
+                taxPrice,
+                shippingPrice,
+                success: true,
+            });
         }
         else {
             res.status(404).json({ message: "Item not found in cart" });
@@ -169,7 +213,7 @@ const updateCart = async (req, res) => {
 exports.updateCart = updateCart;
 const removeItemFromCart = async (req, res) => {
     const { productId } = req.params;
-    const { size } = req.body; // Accept quantity as part of the body
+    const { size } = req.body; // Accept size as part of the body
     const userId = req.user?._id;
     try {
         const cart = await cartModel_1.Cart.findOne({ user: userId });
@@ -177,11 +221,35 @@ const removeItemFromCart = async (req, res) => {
             res.status(404).json({ message: "Cart not found" });
             return;
         }
+        // Remove the item based on productId and size
         cart.items = cart.items.filter((item) => !(item.product.toString() === productId && item.size === size));
+        // Recalculate cart totals
         cart.quantity = cart.items.reduce((acc, item) => acc + item.quantity, 0);
-        cart.totalPrice = cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
+        const itemsPrice = cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
+        const taxPrice = cart.quantity > 0 ? Math.round(itemsPrice * 0.3 * 100) / 100 : 0;
+        const shippingPrice = cart.quantity > 0 ? calculateShippingPrice(cart.quantity, itemsPrice) : 0;
+        const totalPrice = itemsPrice + taxPrice + shippingPrice;
+        cart.itemsPrice = itemsPrice;
+        cart.taxPrice = taxPrice;
+        cart.shippingPrice = shippingPrice;
+        cart.totalPrice = totalPrice;
+        // If the cart is empty, reset everything
+        if (cart.quantity === 0) {
+            cart.shippingPrice = 0;
+            cart.totalPrice = 0;
+            cart.itemsPrice = 0;
+            cart.taxPrice = 0;
+        }
         await cart.save();
-        res.json({ cart, success: true, message: "Item Removed" });
+        res.json({
+            cart,
+            totalPrice,
+            itemsPrice,
+            taxPrice,
+            shippingPrice,
+            success: true,
+            message: "Item removed from cart",
+        });
     }
     catch (error) {
         console.error(error);

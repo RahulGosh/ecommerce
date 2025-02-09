@@ -99,8 +99,26 @@ const cartSchema = new mongoose_1.Schema({
         },
     ],
     quantity: { type: Number, default: 1 },
-    totalPrice: { type: Number, default: 0 },
-    shippingCharges: { type: Number, default: 0 }, // Define shippingCharges here
+    itemsPrice: {
+        type: Number,
+        required: true,
+        default: 0.0,
+    },
+    taxPrice: {
+        type: Number,
+        required: true,
+        default: 0.0,
+    },
+    shippingPrice: {
+        type: Number,
+        required: true,
+        default: 0.0,
+    },
+    totalPrice: {
+        type: Number,
+        required: true,
+        default: 0.0,
+    },
     createdAt: { type: Date, default: Date.now },
 });
 exports.Cart = mongoose_1.default.model("Cart", cartSchema);

@@ -12,6 +12,8 @@ router.route("/register").post(userController_1.registerUser);
 router.route("/login").post(userController_1.login);
 router.route("/admin-login").post(userController_1.adminLogin);
 router.route("/me").get(isAuthenticated_1.isAuthenticated, userController_1.getProfile);
+router.route("/forgot-password").post(userController_1.forgotPassword);
+router.route("/reset-password/:token").post(userController_1.resetPassword);
 router.route("/getAdminDetail").get(adminAuth_1.adminAuth, userController_1.getAdminDetails);
 router.route("/logout").get(userController_1.logout);
 router.route("/create-shipping-detail").post(isAuthenticated_1.isAuthenticated, userController_1.createShippingDetail);

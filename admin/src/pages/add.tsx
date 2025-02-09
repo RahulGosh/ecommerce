@@ -12,7 +12,7 @@ const Add = () => {
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("Men");
   const [subCategory, setSubCategory] = useState("Topwear");
-  const [bestseller, setBestseller] = useState(false);
+  const [bestSeller, setBestSeller] = useState(false);
   const [sizes, setSizes] = useState<string[]>([]);
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -48,12 +48,12 @@ const Add = () => {
     formData.append("price", price);
     formData.append("category", category);
     formData.append("subCategory", subCategory);
-    formData.append("bestseller", JSON.stringify(bestseller));
+    formData.append("bestSeller", bestSeller.toString()); // Changed from JSON.stringify to toString()
     sizes.forEach((size) => formData.append("sizes", size));
     images.forEach((image) => formData.append("images", image));
   
     try {
-      await addProduct(formData).unwrap(); // No need to show toast here
+      await addProduct(formData).unwrap();
       setLoading(false);
     } catch (error) {
       console.error("Error adding product:", error);
@@ -72,7 +72,7 @@ const Add = () => {
   useEffect(() => {
     if (isSuccess) {
       toast.success(data?.message || "Product added successfully!");
-      navigate("/list"); // Redirect after success
+      navigate("/list");
     }
 
     if (error) {
@@ -197,11 +197,11 @@ const Add = () => {
       <div className="flex gap-2 mt-2">
         <input
           type="checkbox"
-          id="bestseller"
-          checked={bestseller}
-          onChange={(e) => setBestseller(e.target.checked)}
+          id="bestSeller"
+          checked={bestSeller}
+          onChange={(e) => setBestSeller(e.target.checked)}
         />
-        <label className="cursor-pointer" htmlFor="bestseller">
+        <label className="cursor-pointer" htmlFor="bestSeller">
           Add to bestseller
         </label>
       </div>
@@ -209,9 +209,9 @@ const Add = () => {
       <button
         type="submit"
         className="w-28 py-3 mt-4 bg-black text-white"
-        disabled={isLoading || loading} // Disable button when loading
+        disabled={isLoading || loading}
       >
-        {isLoading || loading ? "Loading..." : "Add"}{" "}
+        {isLoading || loading ? "Loading..." : "Add"}
       </button>
     </form>
   );

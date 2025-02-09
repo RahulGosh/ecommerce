@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import RelatedProducts from "../components/relatedProducts";
 import { assets } from "../assets/assets";
 import { SearchContext } from "../context/searchContext";
@@ -7,12 +7,24 @@ import { useGetSingleProductQuery } from "../store/api/productApi";
 import { useAddToCartMutation } from "../store/api/cartApi";
 import { toast } from "react-toastify"; // Import toast
 import "react-toastify/dist/ReactToastify.css"; // Import CSS for Toastify
+import { useSelector } from "react-redux";
+import { RootState } from "../store/store";
 
 const Product: React.FC = () => {
   const params = useParams();
+  const navigate = useNavigate()
   const productId = params.productId || "";
 
-  const [addToCart, { data: addToCartData, isSuccess: addToCartSuccess, isLoading: isAddingToCart }] = useAddToCartMutation(); // Use the mutation hook
+  const { user } = useSelector((store: RootState) => store.auth);
+
+  const [
+    addToCart,
+    {
+      data: addToCartData,
+      isSuccess: addToCartSuccess,
+      isLoading: isAddingToCart,
+    },
+  ] = useAddToCartMutation(); // Use the mutation hook
 
   const context = useContext(SearchContext);
 
@@ -40,12 +52,23 @@ const Product: React.FC = () => {
   }, [productData, addToCartSuccess, addToCartData]);
 
   const handleAddToCart = async (productId: string, size: string) => {
-    await addToCart({ productId, size });  // Add product to cart API call
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    await addToCart({ productId, size }); // Add product to cart API call
   };
 
   if (isLoading) {
     return <div>Loading...</div>;
   }
+
+  // Available sizes (you can customize this array if necessary)
+  const allSizes = ["S", "M", "L", "XL", "XXL"];
+
+  // Check if a size is available in the product's size array
+  const availableSizes = productData?.product.sizes || [];
 
   return isSuccess && productData ? (
     <div className="border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100">
@@ -100,11 +123,18 @@ const Product: React.FC = () => {
           <div className="flex flex-col gap-4 my-8">
             <p>Select Size</p>
             <div className="flex gap-2">
-              {productData.product.sizes.map((item, index) => (
+              {allSizes.map((item, index) => (
                 <button
                   onClick={() => setSize(item)}
                   key={index}
-                  className={`border py-2 px-4 bg-gray-100 ${item === size ? "border-orange-500" : ""}`}
+                  className={`border py-2 px-4 bg-gray-100 ${
+                    item === size
+                      ? "border-orange-500"
+                      : !availableSizes.includes(item)
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : ""
+                  }`}
+                  disabled={!availableSizes.includes(item)}
                 >
                   {item}
                 </button>
@@ -115,7 +145,7 @@ const Product: React.FC = () => {
           <button
             onClick={() => handleAddToCart(productId, size)}
             className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700"
-            disabled={isAddingToCart}
+            disabled={isAddingToCart || !size}
           >
             {isAddingToCart ? "Adding to Cart..." : "Add To Cart"}
           </button>

@@ -36,6 +36,9 @@ export const addProduct = async (
     // Convert sizes to an array, ensuring it's a string before using split()
     const sizesArray = Array.isArray(sizes) ? sizes : (typeof sizes === "string" ? sizes.split(",") : []);
 
+    // Ensure bestSeller is a boolean value
+    const isBestSeller = bestSeller === "true" || bestSeller === true;
+
     // Create the product
     const product = await Product.create({
       name,
@@ -45,7 +48,7 @@ export const addProduct = async (
       category,
       subCategory,
       sizes: sizesArray, // Store the sizes as an array
-      bestSeller: bestSeller === "true" ? true : false, // Convert bestSeller to boolean
+      bestSeller: isBestSeller, // Set the bestSeller flag
       date: Date.now(),
     });
 
@@ -77,6 +80,19 @@ export const getAllProducts = async (req: Request, res: Response): Promise<void>
         });
     }
 };
+
+export const latestProductsCollection = async (req: Request, res: Response) => {
+  try {
+    const latestProducts = await Product.find()
+      .sort({ date: -1 }) 
+      .limit(8);
+
+    res.status(200).json({ success: true, products: latestProducts });
+  } catch (error) {
+    console.error("Error fetching latest products:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+}
 
 export const removeProduct = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

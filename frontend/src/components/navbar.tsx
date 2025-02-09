@@ -7,22 +7,36 @@ import menu_icon from "../assets/menu_icon.png";
 import dropdown_icon from "../assets/dropdown_icon.png";
 import { useContext, useEffect, useState } from "react";
 import { SearchContext } from "../context/searchContext";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
 import { useLogoutMutation } from "../store/api/authApi";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { useGetUserCartQuery } from "../store/api/cartApi";
+import { User } from "../types/types";
+import { userLoggedOut } from "../store/slices/authSlice";
 
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
   const [logoutUser, { data, isSuccess }] = useLogoutMutation();
+  const { data: cartData } = useGetUserCartQuery();
+  const { user } = useSelector((store: RootState) => store.auth) as {
+    user: User | null;
+  };
 
+  console.log(cartData, "cartData");
+  const dispatch = useDispatch()
+
+  const cartItemCounts = cartData?.cart?.items?.length || 0;
+
+  console.log(cartItemCounts, "cartItemCount");
   const logoutHandler = async () => {
     await logoutUser(); // Logout mutation
+    dispatch(userLoggedOut())
   };
 
   const context = useContext(SearchContext);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   if (!context) {
     throw new Error(
@@ -37,15 +51,7 @@ const Navbar = () => {
     }
   }, [isSuccess]);
 
-
   const { setShowSearch } = context;
-
-  const cartItems = useSelector((state: RootState) => state.cart.cartItems);
-
-  const cartItemCount = cartItems.reduce(
-    (total: number, item: { quantity: number }) => total + item.quantity,
-    0
-  );
 
   return (
     <div className="flex items-center justify-between py-5 font-medium">
@@ -81,14 +87,27 @@ const Navbar = () => {
         />
 
         <div className="group relative">
-          <Link to="/login">
-            <img className="w-5 cursor-pointer" src={profile_icon} alt="" />
-          </Link>
+          <img className="w-5 cursor-pointer" src={profile_icon} alt="" />
           <div className="group-hover:block hidden absolute dropdown-menu right-0 pt-4">
             <div className="flex flex-col gap-2 w-36 py-3 px-5 bg-slate-100 text-gray-500 rounded">
               <p className="cursor-pointer hover:text-black">My Profile</p>
               <p className="cursor-pointer hover:text-black">Orders</p>
-              <p onClick={logoutHandler} className="cursor-pointer hover:text-black">Logout</p>
+              {user ? (
+                <div>
+                  <p
+                    onClick={logoutHandler}
+                    className="cursor-pointer hover:text-black"
+                  >
+                    Logout
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <Link to="/login">
+                    <p className="cursor-pointer hover:text-black">Login</p>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -96,7 +115,7 @@ const Navbar = () => {
         <Link to="/cart" className="relative">
           <img src={cart_icon} className="w-5 min-w-5" alt="" />
           <p className="absolute right-[-5px] bottom-[-5px] w-4 h-4 text-center leading-[16px] bg-black text-white rounded-full text-[8px]">
-            {cartItemCount || 0}
+            {cartItemCounts}
           </p>
         </Link>
 

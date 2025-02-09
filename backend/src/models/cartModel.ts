@@ -18,7 +18,7 @@ interface CartItemSchema {
   quantity: number;
   price: number;
   createdAt: Date;
-  size: string;
+  size: string; 
   imageUrl: string;
 }
 
@@ -27,8 +27,10 @@ interface CartSchema extends Document {
   shippingInfo: IShippingDetail;
   items: CartItemSchema[];
   quantity: number;
+  itemsPrice: number;
+  taxPrice: number;
+  shippingPrice: number;
   totalPrice: number;
-  shippingCharges: number;  // Add shippingCharges here
   createdAt: Date;
 }
 
@@ -97,8 +99,26 @@ const cartSchema = new Schema<CartSchema>({
     },
   ],
   quantity: { type: Number, default: 1 },
-  totalPrice: { type: Number, default: 0 },
-  shippingCharges: { type: Number, default: 0 },  // Define shippingCharges here
+  itemsPrice: {
+    type: Number,
+    required: true,
+    default: 0.0,
+  },
+  taxPrice: {
+    type: Number,
+    required: true,
+    default: 0.0,
+  },
+  shippingPrice: {
+    type: Number,
+    required: true,
+    default: 0.0,
+  },
+  totalPrice: {
+    type: Number,
+    required: true,
+    default: 0.0,
+  },
   createdAt: { type: Date, default: Date.now },
 });
 

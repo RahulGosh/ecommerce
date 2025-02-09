@@ -53,7 +53,7 @@ export interface AddProductPayload {
   category: string;
   subCategory: string;
   sizes: string; // Comma-separated sizes from the form
-  bestSeller: string; // "true" or "false" from the form
+  bestSeller: boolean; // "true" or "false" from the form
   date: string; // Date as a string
 }
 

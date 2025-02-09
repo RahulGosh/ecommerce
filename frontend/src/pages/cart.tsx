@@ -8,13 +8,30 @@ import CartTotal from "../components/cartTotal";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Loader from "../utils/loader";
+import { useSelector } from "react-redux";
+import { RootState } from "../store/store";
+import { User } from "../types/types";
 
 const CartComponent: React.FC = () => {
   const navigate = useNavigate();
 
-  const { data: cartData, isLoading } = useGetUserCartQuery();
+  const { data: cartData, isLoading, refetch } = useGetUserCartQuery();
   const [updateCart, { isError: updateError, isSuccess: updateSuccess }] = useUpdateCartMutation();
   const [removeCart, { data: removeCartData, isLoading: isRemoving, isError: removeError, isSuccess: removeSuccess }] = useRemoveCartMutation();
+
+  const { user } = useSelector((store: RootState) => store.auth) as {
+    user: User | null;
+  };
+
+  useEffect(() => {
+    if (user) {
+      refetch(); // Refetch when user changes
+    }
+  }, [user, refetch]);
+
+  useEffect(() => {
+    refetch();
+  }, []);
 
   useEffect(() => {
     if (removeSuccess) {

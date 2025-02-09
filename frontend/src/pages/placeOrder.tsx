@@ -9,9 +9,13 @@ import {
   usePlaceOrderMutation,
   usePlaceOrderWithStripeMutation,
   useGetUserOrderQuery,
+  useCreateShippingDetailMutation,
 } from "../store/api/authApi";
 import { useGetUserCartQuery } from "../store/api/cartApi";
-import { CartResponse } from "../types/types";
+import { CartResponse, User } from "../types/types";
+import { useSelector } from "react-redux";
+import { RootState } from "../store/store";
+import { Loader2 } from "lucide-react";
 
 const PlaceOrder = () => {
   type PaymentMethod = "cod" | "razorpay" | "stripe";
@@ -33,18 +37,27 @@ const PlaceOrder = () => {
 
   const navigate = useNavigate();
 
-  const { data: existingShippingDetails, isLoading, isError } =
-    useGetShippingDetailsQuery(undefined);
+  const {
+    data: existingShippingDetails,
+    isLoading: isLoadingShipping,
+    isError: isShippingError,
+  } = useGetShippingDetailsQuery(undefined);
+
   const { data: cartData, refetch: refetchCart } = useGetUserCartQuery();
-  const { data: userOrder } = useGetUserOrderQuery(); // Fetching user order
-  const [updateShippingDetail] = useUpdateShippingDetailMutation();
-  const [placeOrder] = usePlaceOrderMutation();
-  const [placeOrderWithStripe] = usePlaceOrderWithStripeMutation();
+  const { data: userOrder } = useGetUserOrderQuery();
+
+  const [updateShippingDetail, { isLoading: isUpdatingShipping }] = useUpdateShippingDetailMutation();
+  const [createShippingDetail, { isLoading: isCreatingShipping }] = useCreateShippingDetailMutation();
+  const [placeOrder, { isLoading: isPlacingOrder }] = usePlaceOrderMutation();
+  const [placeOrderWithStripe, { isLoading: isProcessingStripe }] = usePlaceOrderWithStripeMutation();
+
+  const isProcessingPayment = isPlacingOrder || isProcessingStripe;
+  const isProcessingShipping = isUpdatingShipping || isCreatingShipping;
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoadingShipping) return;
 
-    if (isError) {
+    if (isShippingError) {
       console.error("Error fetching shipping details");
       return;
     }
@@ -65,26 +78,51 @@ const PlaceOrder = () => {
         phoneNo: detail.phoneNo || 0,
       });
     }
-  }, [existingShippingDetails, isLoading, isError]);
+  }, [existingShippingDetails, isLoadingShipping, isShippingError]);
+
+  const { user } = useSelector((store: RootState) => store.auth) as {
+    user: User | null;
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setShippingDetails((prevState) => ({ ...prevState, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    updateShippingDetail({ shippingId, ...shippingDetails });
-    console.log("Shipping details updated successfully");
-    setIsEditing(false);
-  };
-  console.log(userOrder, "userOrder")
+  const handleSubmit = async () => {
+    if (!user?.profile?._id) {
+      console.error("User ID is missing. Cannot create shipping details.");
+      return;
+    }
+    
+    try {
+      if (shippingId) {
+        await updateShippingDetail({ shippingId, ...shippingDetails }).unwrap();
+        console.log("Shipping details updated successfully");
+      } else {
+        const result = await createShippingDetail({
+          userId: user?.profile?._id,
+          shippingDetail: {
+            ...shippingDetails,
+            userId: user?.profile?._id,
+          },
+        }).unwrap();
 
-  // Define the logic for each payment method
+        if (result?.shippingDetail?._id) {
+          setShippingId(result.shippingDetail._id);
+        }
+        console.log("Shipping details added successfully");
+      }
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error handling shipping details:", error);
+    }
+  };
+
   const paymentMethods: Record<PaymentMethod, () => Promise<void>> = {
     cod: async () => {
-      await placeOrder({ shippingId, method: "cod" });
-      refetchCart()
-      console.log("Order placed successfully with COD");
+      await placeOrder({ shippingId, method: "cod" }).unwrap();
+      await refetchCart();
       navigate("/orders");
     },
     razorpay: async () => {
@@ -92,183 +130,218 @@ const PlaceOrder = () => {
     },
     stripe: async () => {
       if (!cartData) {
-        console.error("No cart data available for Stripe payment.");
-        return;
+        throw new Error("No cart data available for Stripe payment.");
       }
-      // Use the fetched orderId from userOrder for Stripe payment
-      if (userOrder?.order) {
-        const { data, error } = await placeOrderWithStripe();
-        console.log(data, "data stripe");
-        if (error) {
-          console.error("Error placing order with Stripe:", error);
-          return;
-        }
 
-        if (data && data.url) {
-          // Redirect to Stripe's checkout page
-          window.location.href = data.url;
-        } else {
-          console.error("Failed to create Stripe session.");
-        }
+      if (!userOrder?.order) {
+        throw new Error("Order ID not available.");
+      }
+
+      const result = await placeOrderWithStripe().unwrap();
+      
+      if (result?.url) {
+        window.location.href = result.url;
       } else {
-        console.error("Order ID not available.");
+        throw new Error("Failed to create Stripe session.");
       }
     },
   };
 
-  // Place order handler based on selected payment method
   const handlePlaceOrder = async () => {
     try {
       if (paymentMethods[method]) {
-        await paymentMethods[method](); // Dynamically call the selected method
-      } else {
-        console.error("Invalid payment method selected");
+        await paymentMethods[method]();
       }
     } catch (error) {
       console.error("Error processing payment:", error);
     }
   };
 
+  if (isLoadingShipping) {
+    return (
+      <div className="flex items-center justify-center min-h-[80vh]">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col sm:flex-row justify-between gap-4 pt-5 sm:pt-14 min-h-[80vh] border-t">
       <div className="flex flex-col gap-4 w-full sm:max-w-[480px]">
-        {/* Delivery Information Section */}
         <div className="text-xl sm:text-2xl my-3">
-          <Title text1={"DELIVERY"} text2={"INFORMATION"} />
+          <Title text1="DELIVERY" text2="INFORMATION" />
         </div>
-        {/* Shipping Details */}
+        
         <div className="mt-6">
-          <pre>{JSON.stringify(existingShippingDetails?.shippingDetail, null, 2)}</pre>
-          <button
-            className="bg-black text-white px-4 py-2 mt-3 text-sm"
-            onClick={() => setIsEditing((prev) => !prev)}
-          >
-            {isEditing ? "CANCEL" : "EDIT"}
-          </button>
+          {isShippingError ? (
+            <div className="text-red-500">Error loading shipping details. Please try again.</div>
+          ) : (
+            <>
+              {existingShippingDetails?.shippingDetail && !isEditing && (
+                <div className="border p-4 rounded">
+                  <p className="font-medium">
+                    {existingShippingDetails.shippingDetail.firstName}{" "}
+                    {existingShippingDetails.shippingDetail.lastName}
+                  </p>
+                  <p>{existingShippingDetails.shippingDetail.address}</p>
+                  <p>
+                    {existingShippingDetails.shippingDetail.city},{" "}
+                    {existingShippingDetails.shippingDetail.state}{" "}
+                    {existingShippingDetails.shippingDetail.pinCode}
+                  </p>
+                  <p>{existingShippingDetails.shippingDetail.country}</p>
+                  <p>Phone: {existingShippingDetails.shippingDetail.phoneNo}</p>
+                </div>
+              )}
+              <button
+                className="bg-black text-white px-4 py-2 mt-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setIsEditing((prev) => !prev)}
+                disabled={isProcessingShipping}
+              >
+                {existingShippingDetails?.shippingDetail ? "EDIT" : "ADD"}
+              </button>
+            </>
+          )}
         </div>
 
         {isEditing && (
-          <>
-          <div className="flex gap-3">
+          <form className="flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+            <div className="flex gap-3">
+              <input
+                className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
+                type="text"
+                name="firstName"
+                value={shippingDetails.firstName}
+                onChange={handleInputChange}
+                placeholder="First name"
+                required
+              />
+              <input
+                className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
+                type="text"
+                name="lastName"
+                value={shippingDetails.lastName}
+                onChange={handleInputChange}
+                placeholder="Last name"
+                required
+              />
+            </div>
             <input
               className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
-              type="text"
-              name="firstName"
-              value={shippingDetails.firstName}
+              type="email"
+              name="email"
+              value={shippingDetails.email}
               onChange={handleInputChange}
-              placeholder="First name"
+              placeholder="Email address"
+              required
             />
             <input
               className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
               type="text"
-              name="lastName"
-              value={shippingDetails.lastName}
+              name="address"
+              value={shippingDetails.address}
               onChange={handleInputChange}
-              placeholder="Last name"
+              placeholder="Address"
+              required
             />
-          </div>
-          <input
-            className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
-            type="email"
-            name="email"
-            value={shippingDetails.email}
-            onChange={handleInputChange}
-            placeholder="Email address"
-          />
-          <input
-            className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
-            type="text"
-            name="address"
-            value={shippingDetails.address}
-            onChange={handleInputChange}
-            placeholder="Address"
-          />
-          <div className="flex gap-3">
+            <div className="flex gap-3">
+              <input
+                className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
+                type="text"
+                name="city"
+                value={shippingDetails.city}
+                onChange={handleInputChange}
+                placeholder="City"
+                required
+              />
+              <input
+                className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
+                type="text"
+                name="state"
+                value={shippingDetails.state}
+                onChange={handleInputChange}
+                placeholder="State"
+                required
+              />
+            </div>
+            <div className="flex gap-3">
+              <input
+                className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
+                type="number"
+                name="pinCode"
+                value={shippingDetails.pinCode || ""}
+                onChange={handleInputChange}
+                placeholder="Pincode"
+                required
+              />
+              <input
+                className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
+                type="text"
+                name="country"
+                value={shippingDetails.country}
+                onChange={handleInputChange}
+                placeholder="Country"
+                required
+              />
+            </div>
             <input
               className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
-              type="text"
-              name="city"
-              value={shippingDetails.city}
+              type="tel"
+              name="phoneNo"
+              value={shippingDetails.phoneNo || ""}
               onChange={handleInputChange}
-              placeholder="City"
+              placeholder="Phone"
+              required
             />
-            <input
-              className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
-              type="text"
-              name="state"
-              value={shippingDetails.state}
-              onChange={handleInputChange}
-              placeholder="State"
-            />
-          </div>
-          <div className="flex gap-3">
-            <input
-              className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
-              type="number"
-              name="pinCode"
-              value={shippingDetails.pinCode}
-              onChange={handleInputChange}
-              placeholder="Pincode"
-            />
-            <input
-              className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
-              type="text"
-              name="country"
-              value={shippingDetails.country}
-              onChange={handleInputChange}
-              placeholder="Country"
-            />
-          </div>
-          <input
-            className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
-            type="number"
-            name="phoneNo"
-            value={shippingDetails.phoneNo}
-            onChange={handleInputChange}
-            placeholder="Phone"
-          />
-          <button
-            className="bg-black text-white px-4 py-2 mt-3 text-sm"
-            onClick={handleSubmit}
-          >
-            SAVE
-          </button>
-        </>
+            <button
+              type="submit"
+              className="bg-black text-white px-4 py-2 mt-3 text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isProcessingShipping}
+            >
+              {isProcessingShipping && <Loader2 className="w-4 h-4 animate-spin" />}
+              {isProcessingShipping ? "SAVING..." : "SAVE"}
+            </button>
+          </form>
         )}
       </div>
-      {/* Payment Method */}
+
       <div className="mt-8">
-      <CartTotal cart={cartData as CartResponse} />
+        <CartTotal cart={cartData as CartResponse} />
 
         <div className="mt-12">
-          
-        <Title text1={"PAYMENT"} text2={"METHOD"} />
+          <Title text1="PAYMENT" text2="METHOD" />
           <div className="flex gap-3 flex-col lg:flex-row">
             <div
-              onClick={() => setMethod("stripe")}
-              className="flex items-center gap-3 border px-3 py-2 cursor-pointer"
+              onClick={() => !isProcessingPayment && setMethod("stripe")}
+              className={`flex items-center gap-3 border px-3 py-2 cursor-pointer ${
+                isProcessingPayment ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
-              <p
-                className={`w-3.5 h-3.5 border rounded-full ${method === "stripe" ? "bg-green-400" : ""}`}
-              ></p>
+              <div className={`w-3.5 h-3.5 border rounded-full ${
+                method === "stripe" ? "bg-green-400" : ""
+              }`} />
               <img className="h-5 mx-4" src={assets.stripe_logo} alt="Stripe" />
             </div>
             <div
-              onClick={() => setMethod("razorpay")}
-              className="flex items-center gap-3 border px-3 py-2 cursor-pointer"
+              onClick={() => !isProcessingPayment && setMethod("razorpay")}
+              className={`flex items-center gap-3 border px-3 py-2 cursor-pointer ${
+                isProcessingPayment ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
-              <p
-                className={`w-3.5 h-3.5 border rounded-full ${method === "razorpay" ? "bg-green-400" : ""}`}
-              ></p>
+              <div className={`w-3.5 h-3.5 border rounded-full ${
+                method === "razorpay" ? "bg-green-400" : ""
+              }`} />
               <img className="h-5 mx-4" src={assets.razorpay_logo} alt="Razorpay" />
             </div>
             <div
-              onClick={() => setMethod("cod")}
-              className="flex items-center gap-3 border px-3 py-2 cursor-pointer"
+              onClick={() => !isProcessingPayment && setMethod("cod")}
+              className={`flex items-center gap-3 border px-3 py-2 cursor-pointer ${
+                isProcessingPayment ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
-              <p
-                className={`w-3.5 h-3.5 border rounded-full ${method === "cod" ? "bg-green-400" : ""}`}
-              ></p>
+              <div className={`w-3.5 h-3.5 border rounded-full ${
+                method === "cod" ? "bg-green-400" : ""
+              }`} />
               <span className="mx-4 text-sm font-medium">Cash on Delivery</span>
             </div>
           </div>
@@ -276,10 +349,12 @@ const PlaceOrder = () => {
 
         <div className="mt-8">
           <button
-            className="bg-black text-white px-6 py-3 text-sm w-full"
+            className="bg-black text-white px-6 py-3 text-sm w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handlePlaceOrder}
+            disabled={isProcessingPayment || !shippingId}
           >
-            PLACE ORDER
+            {isProcessingPayment && <Loader2 className="w-4 h-4 animate-spin" />}
+            {isProcessingPayment ? "PROCESSING..." : "PLACE ORDER"}
           </button>
         </div>
       </div>

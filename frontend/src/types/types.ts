@@ -43,6 +43,8 @@ export interface Product {
   sizes: string[]; // Array of strings for sizes
   bestSeller: boolean;
   date: Date | string; // Can be Date or string for flexibility
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AddProductPayload {
@@ -136,11 +138,11 @@ export interface CartResponse {
     items: CartItem[];
     quantity: number;
     totalPrice: number;
-    shippingCharges: number;
+    shippingPrice: number;
   };
-  subtotal: number;
-  tax: number;
-  shippingCharges: number;
+  itemsPrice: number;
+  taxPrice: number;
+  shippingPrice: number;
   totalPrice: number;
 }
 
@@ -164,7 +166,7 @@ export interface RemoveCartPayload {
 }
 
 export interface ShippingDetail {
-  _id: string;
+  _id?: string;
   userId: string;
   firstName: string;
   lastName: string;
@@ -177,15 +179,10 @@ export interface ShippingDetail {
   phoneNo: number;
 }
 
-export interface AddShippingDetailPayload {
-  firstName: string;
-  lastName: string;
-  address: string;
-  city: string;
-  state: string;
-  pinCode: number;
-  country: string;
-  phoneNo: number;
+
+export interface CreateShippingDetailRequest {
+  userId: string;
+  shippingDetail: ShippingDetail;
 }
 
 export interface ShippingDetailResponse {

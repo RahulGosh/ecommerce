@@ -1,4 +1,6 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
+import crypto from "crypto";
+import bcrypt from "bcryptjs";
 
 // Define an interface for the User document
 export interface UserSchema extends Document {
@@ -6,8 +8,11 @@ export interface UserSchema extends Document {
   name: string;
   email: string;
   password: string;
-  cartData: Record<string, any>; // Flexible object for cart data
-  shippingDetail: IShippingDetail; // Added type for shippingDetail
+  cartData: Record<string, any>;
+  shippingDetail: IShippingDetail;
+  resetPasswordToken?: string;
+  resetPasswordExpire?: Date;
+  getResetPasswordToken: () => string;
 }
 
 export interface IShippingDetail {
@@ -22,74 +27,45 @@ export interface IShippingDetail {
   phoneNo: number;
 }
 
-
-// Define the shipping detail schema
 const shippingDetailSchema = new Schema<IShippingDetail>({
-  firstName: {
-    type: String,
-    required: true,
-  },
-  lastName: {
-    type: String,
-    required: true,
-  },
-  email: {
-    type: String,
-    required: true,
-  },
-  address: {
-    type: String,
-    required: true,
-  },
-  city: {
-    type: String,
-    required: true,
-  },
-  state: {
-    type: String,
-    required: true,
-  },
-  country: {
-    type: String,
-    required: true,
-  },
-  pinCode: {
-    type: Number,
-    required: true,
-  },
-  phoneNo: {
-    type: Number,
-    required: true,
-  },
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
+  email: { type: String, required: true },
+  address: { type: String, required: true },
+  city: { type: String, required: true },
+  state: { type: String, required: true },
+  country: { type: String, required: true },
+  pinCode: { type: Number, required: true },
+  phoneNo: { type: Number, required: true },
 });
 
 // Define the User schema
 const userSchema: Schema<UserSchema> = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true, // Ensure email is unique
-    },
-    password: {
-      type: String,
-      required: true,
-    },
-    cartData: {
-      type: Object,
-      default: {}, // Default to an empty object
-    },
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    cartData: { type: Object, default: {} },
     shippingDetail: shippingDetailSchema,
+    resetPasswordToken: { type: String },
+    resetPasswordExpire: { type: Date },
   },
-  {
-    timestamps: true, // Adds createdAt and updatedAt timestamps
-    minimize: false, // Ensures empty objects are not removed
-  }
+  { timestamps: true, minimize: false }
 );
+
+// **Add the getResetPasswordToken method**
+userSchema.methods.getResetPasswordToken = function (): string {
+  // Generate a token
+  const resetToken = crypto.randomBytes(20).toString("hex");
+
+  // Hash token and set to resetPasswordToken field
+  this.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+  // Set token expiration time (15 minutes)
+  this.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+
+  return resetToken; // Return the unhashed token to send via email
+};
 
 // Export the User model
 export const User: Model<UserSchema> = mongoose.model<UserSchema>("User", userSchema);

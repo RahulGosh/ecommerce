@@ -34,6 +34,14 @@ export const productApi = createApi({
       keepUnusedDataFor: 0, // Remove cached data immediately
     }),
 
+    latestCollection: builder.query<ProductType, void>({
+      query: () => ({
+        url: "latest-products-collection",
+        method: "GET",
+      }),
+      providesTags: [{ type: "Products" }],
+    }),
+
     getSingleProduct: builder.query<SingleProductRespons, string>({
       query: (productId) => ({
         url: `product/${productId}`,
@@ -61,4 +69,5 @@ export const {
   useGetAllProductsQuery,
   useGetSingleProductQuery,
   useRemoveProductMutation,
+  useLatestCollectionQuery
 } = productApi;

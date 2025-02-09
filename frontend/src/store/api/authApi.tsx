@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { userLoggedIn, userLoggedOut } from "../slices/authSlice";
 import {
-  AddShippingDetailPayload,
+  CreateShippingDetailRequest,
   LoginResponse,
   OrderResponse,
   ProfileData,
@@ -77,15 +77,13 @@ export const authApi = createApi({
       },
     }),
 
-    createShippingDetail: builder.mutation<
-      ShippingDetailResponse,
-      AddShippingDetailPayload
-    >({
-      query: (inputData) => ({
+    createShippingDetail: builder.mutation<ShippingDetailResponse, CreateShippingDetailRequest>({
+      query: (data) => ({
         url: "create-shipping-detail",
-        method: "POST",
-        body: inputData,
+        method: 'POST',
+        body: data,
       }),
+      invalidatesTags: [{ type: "Auth" }],
     }),
 
     updateShippingDetail: builder.mutation<
@@ -132,6 +130,22 @@ export const authApi = createApi({
       }),
       providesTags: [{ type: "Auth" }],
     }),
+
+    forgotPassword: builder.mutation<{ success: boolean; message: string }, { email: string }>({
+      query: ({ email }) => ({
+        url: "forgot-password",
+        method: "POST",
+        body: { email },
+      }),
+    }),
+
+    resetPassword: builder.mutation<{ success: boolean; message: string }, { token: string; password: string }>({
+      query: ({ token, password }) => ({
+        url: `reset-password/${token}`,
+        method: "POST",
+        body: { password: password },
+      }),
+    }),
   }),
 });
 
@@ -145,5 +159,7 @@ export const {
   useGetShippingDetailsQuery,
   usePlaceOrderMutation,
   useGetUserOrderQuery,
-  usePlaceOrderWithStripeMutation
+  usePlaceOrderWithStripeMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation
 } = authApi;

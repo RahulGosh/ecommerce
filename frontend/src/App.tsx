@@ -16,6 +16,8 @@ import { useSelector } from "react-redux";
 import { User } from "./types/types";
 import { RootState } from "./store/store";
 import { AuthenticatedUser, ProtectedRoute } from "./utils/protectedRoute";
+import ForgotPassword from "./pages/forgotPassword";
+import ResetPassword from "./pages/resetPassword";
 
 function App() {
   const { user } = useSelector((store: RootState) => store.auth) as {
@@ -47,6 +49,22 @@ function App() {
           element={
             <AuthenticatedUser>
               <Login />
+            </AuthenticatedUser>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <AuthenticatedUser>
+              <ForgotPassword />
+            </AuthenticatedUser>
+          }
+        />
+        <Route
+          path="/reset-password/:token"
+          element={
+            <AuthenticatedUser>
+              <ResetPassword />
             </AuthenticatedUser>
           }
         />

@@ -1,15 +1,25 @@
-// import React, { useEffect, useState } from "react";
-// import { products, Product } from "../assets/assets";
+import React from "react";
+import { useGetAllProductsQuery } from "../store/api/productApi"; // Adjust the import path if necessary
 import Title from "./title";
-// import ProductItem from "./productItem";
+import ProductItem from "./productItem"; // Ensure you have a ProductItem component to display each product
 
 const BestSeller: React.FC = () => {
-  // const [bestSeller, setBestSeller] = useState<Product[]>([]);
+  const { data, isLoading, isError } = useGetAllProductsQuery();
 
-  // useEffect(() => {
-  //   const bestProduct = products.filter((item) => item.bestseller);
-  //   setBestSeller(bestProduct.slice(0, 5));
-  // }, []);
+  // Ensure that `products` is typed as an array and filter bestsellers
+  const products = Array.isArray(data?.products) ? data?.products : [];
+  const bestSeller = products.filter((item) => item.bestSeller);
+
+  // Limit to the first 8 bestsellers
+  const limitedBestSeller = bestSeller.slice(0, 8);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isError) {
+    return <div>Error loading products</div>;
+  }
 
   return (
     <div className="my-10">
@@ -22,17 +32,19 @@ const BestSeller: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 gap-y-6">
-        {/* {bestSeller.map((item) => (
+        {limitedBestSeller.map((item) => (
           <ProductItem
-            key={item._id} // Use _id from the Product interface
+            key={item._id} // Ensure you're using the unique identifier (e.g., _id)
             id={item._id}
             name={item.name}
-            image={item.image}
+            image={
+              Array.isArray(item.images) && item.images.length > 0
+                ? item.images[0].imageUrl
+                : ""
+            }
             price={item.price}
           />
-        ))} */}
-
-        Best Seller Mapping
+        ))}
       </div>
     </div>
   );

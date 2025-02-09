@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLoginMutation, useRegisterMutation } from "../store/api/authApi";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 
@@ -125,7 +125,9 @@ const Login = () => {
       />
 
       <div className="w-full flex justify-between text-sm mt-[-8px]">
+        <Link to="/forgot-password">
         <p className="cursor-pointer">Forgot your password?</p>
+        </Link>
 
         {currentState === "Login" ? (
           <p className="cursor-pointer" onClick={() => setCurrentState("Sign Up")}>

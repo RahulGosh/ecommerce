@@ -7,6 +7,13 @@ import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
+const calculateShippingPrice = (quantity: number, itemsPrice: number): number => {
+  if (itemsPrice >= 5000) return 0; // Free shipping for orders above $500
+  if (quantity <= 2) return 150; // $5 for small orders
+  if (quantity <= 5) return 250; // $10 for medium orders
+  return 15; // $15 for large orders
+};
+
 export const placeOrder = async (req: PlaceOrderRequest, res: Response): Promise<void> => {
   try {
     console.log(req.body); // Log the body to check its contents
@@ -40,10 +47,10 @@ export const placeOrder = async (req: PlaceOrderRequest, res: Response): Promise
       return;
     }
 
-    // Calculate the subtotal, tax, shipping charges, and total
+    cart.quantity = cart.items.reduce((total, item) => total + item.quantity, 0);
     const itemsPrice = cart.items.reduce((total, item) => total + item.price * item.quantity, 0);
     const taxPrice = Math.round(itemsPrice * 0.3 * 100) / 100;
-    const shippingPrice = cart.shippingCharges || 0;
+    const shippingPrice = calculateShippingPrice(cart.quantity, itemsPrice);
     const totalPrice = itemsPrice + taxPrice + shippingPrice;
 
     // Create a new order
@@ -114,19 +121,18 @@ export const placeOrderWithStripe = async (req: PlaceOrderRequest, res: Response
 
     // Check if user already has shipping details
     const existingShippingDetail = user.shippingDetail;
-
     if (!existingShippingDetail) {
       res.status(400).json({ message: "Shipping details are missing. Please provide shipping details." });
       return;
     }
 
-    // Calculate the subtotal, tax, shipping charges, and total
+    cart.quantity = cart.items.reduce((total, item) => total + item.quantity, 0);
     const itemsPrice = cart.items.reduce((total, item) => total + item.price * item.quantity, 0);
     const taxPrice = Math.round(itemsPrice * 0.3 * 100) / 100;
-    const shippingPrice = cart.shippingCharges || 0;
+    const shippingPrice = calculateShippingPrice(cart.quantity, itemsPrice);
     const totalPrice = itemsPrice + taxPrice + shippingPrice;
 
-    // Create a new order for Stripe payment method
+    // Step 1: Create order in database with "Pending Payment" status
     const order = await Order.create({
       user: userId,
       orderItems: cart.items.map((item: any) => ({
@@ -142,38 +148,39 @@ export const placeOrderWithStripe = async (req: PlaceOrderRequest, res: Response
       taxPrice,
       shippingPrice,
       totalPrice,
-      paymentMethod: "Stripe", // Stripe payment method
-      paymentStatus: "Unpaid", // Default to unpaid
-      shippingStatus: "Order Placed", // Default status
+      paymentMethod: "Stripe",
+      paymentStatus: "Unpaid",
+      shippingStatus: "Order Placed",
     });
 
-    // Create a Stripe checkout session for the order
+    // Convert total price to cents for Stripe
+    const totalPriceInCents = Math.round(totalPrice * 100);
+
+    // Step 2: Create Stripe Checkout Session with orderId in metadata
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-      line_items: order.orderItems.map((item) => ({
-        price_data: {
-          currency: "inr",
-          product_data: {
-            name: item.name,
-            images: [item.imageUrl],
+      line_items: [
+        {
+          price_data: {
+            currency: "inr",
+            product_data: {
+              name: "Order Payment",
+            },
+            unit_amount: totalPriceInCents,
           },
-          unit_amount: item.price * 100, // Price in cents
+          quantity: 1,
         },
-        quantity: item.quantity,
-      })),
+      ],
       mode: "payment",
-      success_url: `${process.env.FRONTEND_URL}/order-success/${order.id}`,
-      cancel_url: `${process.env.FRONTEND_URL}/order-failed/${order.id}`,
+      success_url: `${process.env.FRONTEND_URL}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL}/order-failed`,
       metadata: {
+        userId: userId.toString(),
         orderId: order.id.toString(), // Convert _id to a string
       },
     } as Stripe.Checkout.SessionCreateParams); // Cast the params to the correct type
 
-    // Update order with Stripe payment method
-    order.paymentMethod = "Stripe";
-    await order.save();
-
-    // Clear the cart after placing the order
+    // Step 3: Clear the user's cart after creating the order
     cart.items = [];
     cart.totalPrice = 0;
     cart.quantity = 0;
@@ -217,16 +224,15 @@ export const stripeWebhook = async (req: StripeWebhookRequest, res: Response): P
 
     event = stripe.webhooks.constructEvent(payloadString, header, secret);
   } catch (error: any) {
-    console.error("⚠️  Webhook signature verification failed:", error.message);
+    console.error("⚠️ Webhook signature verification failed:", error.message);
     res.status(400).send(`Webhook Error: ${error.message}`);
     return;
   }
 
-  // Handle the checkout.session.completed event
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
 
-    // Find the associated order by orderId (stored in metadata)
+    // Retrieve orderId from metadata
     const orderId = session.metadata?.orderId;
     if (!orderId) {
       console.error('No order ID found in metadata');
@@ -241,9 +247,10 @@ export const stripeWebhook = async (req: StripeWebhookRequest, res: Response): P
         return;
       }
 
-      // Update the order status and payment information
+      // Step 4: Update order status after successful payment
       order.paymentStatus = "Paid";
-      order.paidAt = new Date(); // Mark as paid
+      order.paidAt = new Date();
+      order.shippingStatus = "Order Placed"; // Update status
       await order.save();
 
       console.log(`Order ${orderId} successfully updated after Stripe payment`);
@@ -254,7 +261,6 @@ export const stripeWebhook = async (req: StripeWebhookRequest, res: Response): P
       res.status(500).send('Error processing the order');
     }
   } else {
-    // Handle other event types as needed
     res.status(200).send('Event received');
   }
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   useGetAllOrdersQuery,
   useUpdateStatusMutation,
@@ -6,12 +6,12 @@ import {
 } from "../store/api/orderApi";
 import { toast } from "react-toastify";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
-import { FiPackage, FiTruck, FiCheckCircle, FiDollarSign, FiCreditCard, FiClock, FiMapPin, FiPhone, FiUser, FiAlertCircle } from "react-icons/fi";
+import { FiPackage, FiCheckCircle, FiDollarSign, FiClock, FiMapPin, FiPhone, FiUser, FiAlertCircle } from "react-icons/fi";
 import Loader from "../utils/loader";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 
 const Orders = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { data, isLoading, refetch } = useGetAllOrdersQuery();
   const [
     updateStatus,
@@ -32,7 +32,7 @@ const Orders = () => {
     },
   ] = useUpdateStatusForCODMutation();
 
-  const [orderUpdated, setOrderUpdated] = useState<boolean>(false);
+  // const [orderUpdated, setOrderUpdated] = useState<boolean>(false);
 
   useEffect(() => {
     if (statusUpdated) {
@@ -88,7 +88,7 @@ const Orders = () => {
         orderId,
         shippingStatus: newStatus,
       }).unwrap();
-      setOrderUpdated(true);
+      // setOrderUpdated(true);
     } catch (error) {
       console.error("Failed to update status:", error);
     }
@@ -101,7 +101,7 @@ const Orders = () => {
           orderId,
           paymentStatus,
         }).unwrap();
-        setOrderUpdated(true);
+        // setOrderUpdated(true);
       } catch (error) {
         console.error("Failed to update COD status:", error);
       }

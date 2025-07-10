@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { Order, OrderResponse, UpdateStatusForCODPayload, UpdateStatusForCODResponse, UpdateStatusPayload, UpdateStatusResponse } from "../../types/types";
+import { OrderResponse, UpdateStatusForCODPayload, UpdateStatusForCODResponse, UpdateStatusPayload, UpdateStatusResponse } from "../../types/types";
 
 const Order_Api = `${import.meta.env.VITE_BACKEND_URL}/api/v1`;
 

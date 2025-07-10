@@ -1,4 +1,4 @@
-import React, { useEffect, useState, ChangeEvent, FormEvent } from "react";
+import { useEffect, useState, ChangeEvent, FormEvent } from "react";
 import { useGetProductByIdQuery, useUpdateProductMutation } from "../store/api/productApi";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -14,7 +14,7 @@ const Edit = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   const { data: productData, isLoading: isProductLoading } = useGetProductByIdQuery(productId || "");
-  const [updateProduct, { isLoading, isSuccess, error }] = useUpdateProductMutation();
+  const [updateProduct, { isLoading }] = useUpdateProductMutation();
 
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");

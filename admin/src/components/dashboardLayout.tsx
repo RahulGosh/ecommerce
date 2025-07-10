@@ -1,5 +1,5 @@
 import React, { useState, ReactNode } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { FiLogOut, FiMenu, FiBell, FiSettings } from "react-icons/fi";
 import { useLogoutMutation } from "../store/api/adminApi";
 
@@ -51,7 +51,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);

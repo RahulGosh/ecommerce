@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { FiX, FiSave, FiUpload, FiAlertCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { useUpdateProductMutation } from '../store/api/productApi';
-import { Product, ProductType } from '../types/types';
+import { Product } from '../types/types';
 
 interface EditProductModalProps {
   product: Product;
@@ -12,13 +12,13 @@ interface EditProductModalProps {
 
 const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, onUpdate }) => {
   const [formData, setFormData] = useState({
-    name: product?.name,
-    description: product.description,
-    price: product.price,
-    category: product.category,
-    subCategory: product.subCategory,
-    sizes: product.sizes.join(','),
-    bestSeller: product.bestSeller,
+    name: product?.name || '',
+    description: product?.description || '',
+    price: product?.price || 0,
+    category: product?.category || '',
+    subCategory: product?.subCategory || '',
+    sizes: product?.sizes?.join(',') || '',
+    bestSeller: product?.bestSeller || false,
   });
   
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -59,7 +59,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
     }
 
     try {
-      const response = await updateProduct({
+      await updateProduct({
         productId: product._id,
         formData: data
       }).unwrap();
@@ -73,6 +73,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
       onUpdate();
       onClose();
     } catch (error) {
+      console.log(error)
       toast.error(
         <div className="flex items-center">
           <FiAlertCircle className="mr-2" />

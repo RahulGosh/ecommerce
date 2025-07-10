@@ -18,7 +18,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   isHovered,
   onMouseEnter,
   onMouseLeave,
-  showQuickView = true,
+  // showQuickView = true,
   showColorOptions = true,
   showCategory = true,
   showAddToCart = true,

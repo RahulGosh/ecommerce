@@ -9,23 +9,23 @@ import TestimonialsSection from "../components/home/testimonialSection";
 import NewsletterSection from "../components/newsletterBox";
 import RecentlyViewed from "../components/recentlyViewed";
 import BestSellerSection from "../components/home/bestSeller";
-import { User } from "../types/types";
-import { useSelector } from "react-redux";
-import { RootState } from "../store/store";
+// import { User } from "../types/types";
+// import { useSelector } from "react-redux";
+// import { RootState } from "../store/store";
 import { useLoadUserQuery } from "../store/api/authApi"; // Import your API hook
 
 const Home = () => {
-  const { user } = useSelector((store: RootState) => store.auth) as {
-    user: User | null;
-  };
+  // const { user } = useSelector((store: RootState) => store.auth) as {
+  //   user: User | null;
+  // };
   
   // Fetch user data including recently viewed items
-  const { data: userData, isLoading } = useLoadUserQuery();
+  const { data: userData } = useLoadUserQuery();
   
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   // Check if user has recently viewed items
-  const hasRecentlyViewed = userData?.recentlyViewed && userData.recentlyViewed.length > 0;
+  // const hasRecentlyViewed = userData?.recentlyViewed && userData.recentlyViewed.length > 0;
 
   return (
     <div className="min-h-screen bg-white font-sans overflow-x-hidden">

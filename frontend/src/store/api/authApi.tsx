@@ -186,7 +186,8 @@ export const authApi = createApi({
         method: "POST",
       }),
       invalidatesTags: ["RecentlyViewed"], // Invalidate cache after adding
-      async onQueryStarted({ productId }, { queryFulfilled, dispatch }) {
+      async onQueryStarted(_args, { queryFulfilled, dispatch }) {
+        // Changed parameter name
         try {
           const { data } = await queryFulfilled;
           if (data.user) {
@@ -214,5 +215,5 @@ export const {
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useGetRecentlyViewedQuery,
-  useAddToRecentlyViewedMutation
+  useAddToRecentlyViewedMutation,
 } = authApi;

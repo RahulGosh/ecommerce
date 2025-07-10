@@ -276,7 +276,7 @@ const OrderSuccess = () => {
                   </div>
                   <div className="mt-4 sm:mt-0 sm:ml-6 flex-grow">
                     <p className="font-medium text-gray-800">{item.name}</p>
-                    {item.size && <p className="text-gray-500 text-sm">Size: {item.size}</p>}
+                    {item?.size && <p className="text-gray-500 text-sm">Size: {item.size}</p>}
                     <p className="text-gray-500 text-sm">Quantity: {item.quantity}</p>
                   </div>
                   <div className="mt-4 sm:mt-0 text-right">

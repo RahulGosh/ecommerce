@@ -232,6 +232,7 @@ export interface OrderItem {
   price: number;
   imageUrl: string;
   _id: string;
+    size?: string; // Add this to make size optional
 }
 
 export interface Order {

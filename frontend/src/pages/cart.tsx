@@ -15,7 +15,6 @@ import {
   FiShoppingBag, 
   FiArrowLeft,
   FiHeart,
-  FiX,
   FiChevronDown,
   FiChevronUp
 } from "react-icons/fi";
@@ -36,7 +35,7 @@ const CartComponent: React.FC = () => {
   const [updateCart, { isError: updateError, isSuccess: updateSuccess }] = useUpdateCartMutation();
   const [removeCart, { 
     data: removeCartData, 
-    isLoading: isRemovingGlobal, 
+    // isLoading: isRemovingGlobal, 
     isError: removeError, 
     isSuccess: removeSuccess 
   }] = useRemoveCartMutation();

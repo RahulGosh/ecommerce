@@ -9,7 +9,6 @@ import Login from "./pages/login";
 import PlaceOrder from "./pages/placeOrder";
 import Orders from "./pages/orders";
 import Navbar from "./components/navbar";
-import Footer from "./components/footer";
 import SearchBar from "./components/searchBar";
 import { ToastContainer } from "react-toastify";
 import { useSelector } from "react-redux";

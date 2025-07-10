@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { assets } from "../assets/assets";
 import CartTotal from "../components/cartTotal";
-import Title from "../components/title";
 import { useNavigate } from "react-router-dom";
 import {
   useUpdateShippingDetailMutation,
@@ -15,7 +14,7 @@ import { useGetUserCartQuery } from "../store/api/cartApi";
 import { CartResponse, User } from "../types/types";
 import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
-import { Loader2, ChevronRight, Edit, Plus } from "lucide-react";
+import { Loader2, ChevronRight, Edit } from "lucide-react";
 
 const PlaceOrder = () => {
   type PaymentMethod = "cod" | "razorpay" | "stripe";

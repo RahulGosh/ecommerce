@@ -4,35 +4,35 @@ import { Clock, Package, CreditCard, TruckIcon, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
 // TypeScript interfaces for order data
-interface OrderItem {
-  name: string;
-  price: number;
-  quantity: number;
-  imageUrl?: string;
-}
+// interface OrderItem {
+//   name: string;
+//   price: number;
+//   quantity: number;
+//   imageUrl?: string;
+// }
 
-interface ShippingInfo {
-  address: string;
-  city: string;
-  pinCode: string;
-}
+// interface ShippingInfo {
+//   address: string;
+//   city: string;
+//   pinCode: string;
+// }
 
-interface Order {
-  _id: string;
-  createdAt: string;
-  updatedAt: string;
-  orderItems: OrderItem[];
-  shippingInfo?: ShippingInfo;
-  shippingPrice: number;
-  shippingStatus: string;
-  paymentStatus: string;
-  taxPrice: number;
-  totalPrice: number;
-}
+// interface Order {
+//   _id: string;
+//   createdAt: string;
+//   updatedAt: string;
+//   orderItems: OrderItem[];
+//   shippingInfo?: ShippingInfo;
+//   shippingPrice: number;
+//   shippingStatus: string;
+//   paymentStatus: string;
+//   taxPrice: number;
+//   totalPrice: number;
+// }
 
-interface OrderResponse {
-  order: Order[];
-}
+// interface OrderResponse {
+//   order: Order[];
+// }
 
 // Define order status types
 type OrderStatus = 
@@ -43,7 +43,7 @@ type OrderStatus =
   | "Delivered";
 
 const Orders = () => {
-  const { data, isLoading, error, refetch } = useGetUserOrderQuery<{ data: OrderResponse | undefined, isLoading: boolean, error: any, refetch: () => void }>();
+const { data, isLoading, error, refetch } = useGetUserOrderQuery();
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
 
   if (isLoading) {

@@ -11,11 +11,11 @@ interface RecentlyViewedProps {
 }
 
 const RecentlyViewed: React.FC<RecentlyViewedProps> = ({
-  recentItems = [],
+  // recentItems = [],
   onItemClick,
 }) => {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  const { data, isLoading, isError } = useGetRecentlyViewedQuery();
+  const { data } = useGetRecentlyViewedQuery();
 
   // Default items matching Product type
   const defaultItems: Product[] = [

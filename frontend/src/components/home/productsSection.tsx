@@ -11,8 +11,8 @@ interface Props {
 
 const ProductsSection: React.FC<Props> = ({ hoveredItem, setHoveredItem }) => {
   const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true });
-  const { data: latestProducts, isLoading, error } = useLatestCollectionQuery();
-  const navigate = useNavigate()
+  const { data: latestProducts } = useLatestCollectionQuery(); // Removed unused isLoading and error
+  const navigate = useNavigate();
 
   const products = latestProducts?.products || [];
 
@@ -71,16 +71,16 @@ const ProductsSection: React.FC<Props> = ({ hoveredItem, setHoveredItem }) => {
               variants={itemVariants}
               className="h-96"
             >
-                <Link to={`/product/${product?._id}`}>
-              <ProductCard
-                product={product}
-                isHovered={hoveredItem === product._id}
-                onMouseEnter={() => setHoveredItem(product._id)}
-                onMouseLeave={() => setHoveredItem(null)}
-                showQuickView={true}
-                showColorOptions={true}
-                showCategory={true}
-              />
+              <Link to={`/product/${product?._id}`}>
+                <ProductCard
+                  product={product}
+                  isHovered={hoveredItem === product._id}
+                  onMouseEnter={() => setHoveredItem(product._id)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  showQuickView={true}
+                  showColorOptions={true}
+                  showCategory={true}
+                />
               </Link>
             </motion.div>
           ))}

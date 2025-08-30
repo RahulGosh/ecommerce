@@ -2,6 +2,7 @@ import React from "react";
 import { useGetAllProductsQuery } from "../store/api/productApi"; // Adjust the import path if necessary
 import Title from "./title";
 import ProductItem from "./productItem"; // Ensure you have a ProductItem component to display each product
+import LoadingScreen from "../utils/loadingScreen";
 
 const BestSeller: React.FC = () => {
   const { data, isLoading, isError } = useGetAllProductsQuery();
@@ -14,7 +15,7 @@ const BestSeller: React.FC = () => {
   const limitedBestSeller = bestSeller.slice(0, 8);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingScreen />;
   }
 
   if (isError) {

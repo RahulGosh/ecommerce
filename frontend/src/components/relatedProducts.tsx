@@ -5,6 +5,7 @@ import ProductCard from "./productCard";
 import { useGetAllProductsQuery } from "../store/api/productApi";
 import { Product } from "../types/types";
 import { Link } from "react-router-dom";
+import LoadingScreen from "../utils/loadingScreen";
 
 interface RelatedProductsProps {
   category: string;
@@ -54,7 +55,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
   };
 
   if (isLoading) {
-    return <div className="text-center py-16">Loading...</div>;
+    return <div className="text-center py-16"><LoadingScreen /></div>;
   }
 
   if (isError) {

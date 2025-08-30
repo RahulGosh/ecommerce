@@ -6,10 +6,11 @@ import { BrowserRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import { appStore } from "./store/store.ts";
 import { useLoadAdminQuery } from "./store/api/adminApi.ts";
+import LoadingScreen from './../../frontend/src/utils/loadingScreen';
 
 const Custom = ({ children }: { children: React.ReactNode }) => {
   const { isLoading } = useLoadAdminQuery();
-  return <>{isLoading ? <h1>Loading...</h1> : <>{children}</>}</>;
+  return <>{isLoading ? <LoadingScreen /> : children}</>;
 };
 
 createRoot(document.getElementById("root")!).render(
